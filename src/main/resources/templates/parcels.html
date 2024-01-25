@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <title>Parcel Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+
+        form {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 50%;
+        }
+
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #parcelTable th:nth-child(1),
+        #parcelTable td:nth-child(1) {
+            width: 5%;
+        }
+
+        #parcelTable th:nth-child(6),
+        #parcelTable td:nth-child(6) {
+            width: 15%;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const addParcelForm = document.getElementById("addParcelForm");
+            const parcelTableBody = document.getElementById("parcelTableBody");
+
+            // Funkcja do pobierania listy paczek
+            async function fetchParcels() {
+                try {
+                    const response = await fetch("/api/parcels/");
+                    return await response.json();
+                } catch (error) {
+                    console.error("Error fetching parcels:", error);
+                    return [];
+                }
+            }
+
+            // Funkcja do aktualizacji tabeli z paczkami
+            async function updateParcelTable() {
+                const parcels = await fetchParcels();
+
+                parcelTableBody.innerHTML = "";
+                parcels.forEach(parcel => {
+                    console.log(parcel);
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                <td>${parcel.id}</td>
+                <td>${parcel.lockerId}</td>
+                <td>${parcel.sender.email}</td>
+                <td>${parcel.recipient.email}</td>
+                <td>${parcel.size}</td>
+                <td>${parcel.parcelType}</td>
+                <td>${parcel.pickupCode}</td>
+                <td>${parcel.collected}</td>
+                <td>
+                    <input type="text" id="pickupCode" placeholder="Enter Pickup Code">
+                    <button class="pickupButton">Pick up</button>
+                    <button class="deliverButton">Deliver Parcel</button>
+                </td>`;
+                    parcelTableBody.appendChild(row);
+                });
+            }
+
+            parcelTableBody.addEventListener("click", async function(event) {
+                if (event.target.classList.contains("pickupButton")) {
+                    const row = event.target.closest("tr");
+                    const parcelId = row.querySelector("td").textContent;
+                    const pickupCode = row.querySelector("input").value;
+
+                    try {
+                        const response = await fetch(`/api/parcels/pickup-parcel?id=${parcelId}&code=${pickupCode}`, {
+                            method: "POST",
+                        });
+
+                        if (response.ok) {
+                            // Aktualizuj tabelę z paczkami po pomyślnym odbiorze
+                            updateParcelTable();
+                        } else {
+                            console.error("Error picking up parcel");
+                        }
+                    } catch (error) {
+                        console.error("Error picking up parcel:", error);
+                    }
+                }
+            });
+
+            // Obsługa przycisku do dostarczenia
+            parcelTableBody.addEventListener("click", async function(event) {
+                if (event.target.classList.contains("deliverButton")) {
+                    const row = event.target.closest("tr");
+                    const parcelId = row.querySelector("td").textContent;
+
+                    try {
+                        const response = await fetch(`/api/parcels/deliver-parcel?id=${parcelId}`, {
+                            method: "POST",
+                        });
+
+                        if (response.ok) {
+
+                            // Aktualizuj tabelę z paczkami po pomyślnym odbiorze
+                            updateParcelTable();
+                        } else {
+                            console.error("Error delivering parcel");
+                        }
+                    } catch (error) {
+                        console.error("Error delivering parcel:", error);
+                    }
+                }
+            });
+
+            addParcelForm.addEventListener("submit", async function(event) {
+                event.preventDefault();
+                console.log("Form submitted");
+
+                // Pobierz dane z formularza
+                const formData = new FormData(addParcelForm);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+
+                try {
+                    const response = await fetch(`/api/parcels/send-parcel`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (response.ok) {
+                        // Aktualizuj tabelę z paczkami po pomyślnym odbiorze
+                        updateParcelTable();
+                    } else {
+                        console.error("Error picking up parcel");
+                    }
+                } catch (error) {
+                    console.error("Error picking up parcel:", error);
+                }
+
+                // Zaktualizuj tabelę z paczkami
+                updateParcelTable();
+
+                // Wyczyść formularz
+                addParcelForm.reset();
+            });
+
+            // Inicjalizacja: Załaduj istniejące paczki do tabeli
+            updateParcelTable();
+        });
+    </script>
+</head>
+<body>
+
+<h2>Parcels</h2>
+<table id="parcelTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Locker ID</th>
+        <th>Sender</th>
+        <th>Recipient</th>
+        <th>Size</th>
+        <th>Type</th>
+        <th>Pickup code</th>
+        <th>Collected</th>
+    </tr>
+    </thead>
+    <tbody id="parcelTableBody">
+    <!-- Paczki zostaną dynamicznie dodane tutaj za pomocą JavaScript -->
+    </tbody>
+</table>
+<h2>Add New Parcel</h2>
+<form id="addParcelForm">
+
+    <label for="lockerId">Locker ID:</label>
+    <input type="number" id="lockerId" name="lockerId" required><br>
+
+    <label for="size">Size:</label>
+    <select id="size" name="size" required>
+        <option value="SMALL">Small</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LARGE">Large</option>
+    </select><br>
+
+    <label for="parcelType">Type:</label>
+    <select id="parcelType" name="parcelType" required>
+        <option value="SHORT_TERM">Short Term</option>
+        <option value="LONG_TERM">Long Term</option>
+    </select><br>
+
+    <label for="senderEmail">Sender Email:</label>
+    <input type="email" id="senderEmail" name="senderEmail" required><br>
+
+    <label for="recipientEmail">Recipient Email:</label>
+    <input type="email" id="recipientEmail" name="recipientEmail" required><br>
+
+    <button type="submit" >Add Parcel</button>
+</form>
+</body>
+</html>

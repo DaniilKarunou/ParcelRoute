@@ -1,0 +1,8 @@
+com.parcelroute
+com.parcelroute.config
+com.parcelroute.controller
+com.parcelroute.exception
+com.parcelroute.model
+com.parcelroute.model.parcel
+com.parcelroute.repository
+com.parcelroute.service

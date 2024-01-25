@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.parcelflow"},{"l":"com.parcelflow.config"},{"l":"com.parcelflow.controller"},{"l":"com.parcelflow.exception"},{"l":"com.parcelflow.model"},{"l":"com.parcelflow.model.parcel"},{"l":"com.parcelflow.repository"},{"l":"com.parcelflow.service"}];updateSearchResults();

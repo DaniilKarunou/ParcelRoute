@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <title>Parcel Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1, h2 {
+      margin-bottom: 10px;
+    }
+
+    form {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+      width: 50%;
+    }
+
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    #parcelTable th:nth-child(1),
+    #parcelTable td:nth-child(1) {
+      width: 5%;
+    }
+
+    #parcelTable th:nth-child(6),
+    #parcelTable td:nth-child(6) {
+      width: 15%;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const addLockerForm = document.getElementById("addLockerForm");
+      const lockerTableBody = document.getElementById("lockerTableBody");
+
+      // Funkcja do pobierania użytkowników z API
+      async function fetchLockers() {
+        try {
+          const response = await fetch("/api/lockers/");
+          return await response.json();
+        } catch (error) {
+          console.error("Error fetching lockers:", error);
+          return [];
+        }
+      }
+
+      // Funkcja do aktualizacji tabeli z użytkownikami
+      async function updateLockerTable() {
+        const lockers = await fetchLockers();
+
+        lockerTableBody.innerHTML = "";
+        lockers.forEach(locker => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                <td>${locker.id}</td>
+                <td>${locker.address}</td>
+               `;
+          lockerTableBody.appendChild(row);
+        });
+      }
+
+      addLockerForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        // Pobierz dane z formularza
+        const formData = new FormData(addLockerForm);
+        const data = {};
+        formData.forEach((value, key) => {
+          data[key] = value;
+        });
+
+        try {
+          const response = await fetch(`/api/lockers/add-locker`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            updateLockerTable();
+          } else {
+            console.error("Error adding locker");
+          }
+        } catch (error) {
+          console.error("Error adding locker:", error);
+        }
+
+        // Zaktualizuj tabelę z paczkami
+        updateLockerTable();
+
+        // Wyczyść formularz
+        addLockerForm.reset();
+      });
+
+      // Inicjalizacja: Załaduj istniejące paczki do tabeli
+      updateLockerTable();
+    });
+  </script>
+</head>
+<body>
+
+<h2>Lockers</h2>
+<table id="lockerTable">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Address</th>
+  </tr>
+  </thead>
+  <tbody id="lockerTableBody">
+  </tbody>
+</table>
+<h2>Add New Locker</h2>
+<form id="addLockerForm">
+
+  <label for="address">Address:</label>
+  <input type="text" id="address" name="address" required><br>
+
+  <button type="submit" >Add Locker</button>
+</form>
+</body>
+</html>
